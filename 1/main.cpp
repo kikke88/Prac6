@@ -20,15 +20,16 @@ void quantum_transformation(const complexd* a, complexd* result, const int n, co
 	for (int i = 0; i < num_of_elem; i += 1) {
 		result[i] = u[i & test && 1][0] * a[i & ~(test)] + u[i & test && 1][1] * a[i | test];
 	}
-
+/*
 	for (int i = 0; i < num_of_elem; ++i) {
 		cout << result[i] << endl;
 	}
-
+*/
 }
 
 int main(int argc, char* argv[])//n, k, t
 {
+	
 	bool test = false;
 	double prog_time1 = 0, prog_time2 = 0;
 	int num_of_start = 1;
