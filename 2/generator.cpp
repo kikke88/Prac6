@@ -1,6 +1,7 @@
 #include <iostream>
 #include <complex>
 #include <cmath>
+#include <string>
 #include <cstdlib>
 #include <fstream>
 
@@ -8,14 +9,15 @@
 
 using namespace std;
 typedef complex<double> complexd;
-const double RAND_MAX_D = RAND_MAX;
 
 int main(int argc, char* argv[])//n
 {
 	int n = strtol(argv[1], NULL, 10),
-		k = strtol(argv[2], NULL, 10),
 		num_of_elem = 1 << n;
-	int thrds = strtol(argv[3], NULL, 10);
+	int thrds = 2;
+	if (argc == 3) {
+		thrds = strtol(argv[2], NULL, 10);
+	}
 	omp_set_num_threads(thrds);
 	complexd* qbit_vec = new complexd[num_of_elem];
 	double sum = 0;
@@ -26,6 +28,7 @@ int main(int argc, char* argv[])//n
 		thrd_seed = cur_time + omp_get_thread_num();
 #pragma omp for reduction(+:sum)
 		for (int i = 0; i < num_of_elem; i += 1) {
+			//qbit_vec[i] = complexd(i, i + 1);
 			qbit_vec[i] = complexd(rand_r(&thrd_seed), rand_r(&thrd_seed));
 			sum += norm(qbit_vec[i]);
 		}
@@ -35,8 +38,9 @@ int main(int argc, char* argv[])//n
 	for (int i = 0; i < num_of_elem; i += 1) {
 		qbit_vec[i] /= sum;
 	}
-    ofstream ofile("out.data", ios::binary);
-    out.write((char *) &qbit_vec, sizeof qbit_vec);
+	string num(argv[1]);
+    ofstream ofile(num + "_qubit.data", ios::binary);
+    ofile.write((char *) qbit_vec, num_of_elem * sizeof(complexd));
     delete[] qbit_vec;
     return 0;
 }
