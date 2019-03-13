@@ -2,6 +2,7 @@
 #include <complex>
 #include <cmath>
 #include <string>
+#include <cstring>
 #include <cstdlib>
 #include <fstream>
 
@@ -10,14 +11,11 @@
 using namespace std;
 typedef complex<double> complexd;
 
-int main(int argc, char* argv[])//n
+int main(int argc, char* argv[])//n, ofile_name
 {
 	int n = strtol(argv[1], NULL, 10),
 		num_of_elem = 1 << n;
 	int thrds = 2;
-	if (argc == 3) {
-		thrds = strtol(argv[2], NULL, 10);
-	}
 	omp_set_num_threads(thrds);
 	complexd* qbit_vec = new complexd[num_of_elem];
 	double sum = 0;
@@ -28,8 +26,8 @@ int main(int argc, char* argv[])//n
 		thrd_seed = cur_time + omp_get_thread_num();
 #pragma omp for reduction(+:sum)
 		for (int i = 0; i < num_of_elem; i += 1) {
-			//qbit_vec[i] = complexd(i, i + 1);
-			qbit_vec[i] = complexd(rand_r(&thrd_seed), rand_r(&thrd_seed));
+			qbit_vec[i] = complexd(i, i + 1);
+			//qbit_vec[i] = complexd(rand_r(&thrd_seed), rand_r(&thrd_seed));
 			sum += norm(qbit_vec[i]);
 		}
     }
@@ -38,8 +36,7 @@ int main(int argc, char* argv[])//n
 	for (int i = 0; i < num_of_elem; i += 1) {
 		qbit_vec[i] /= sum;
 	}
-	string num(argv[1]);
-    ofstream ofile(num + "_qubit.data", ios::binary);
+    ofstream ofile(argv[2], ios::binary);
     ofile.write((char *) qbit_vec, num_of_elem * sizeof(complexd));
     delete[] qbit_vec;
     return 0;

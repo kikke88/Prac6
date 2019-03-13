@@ -7,7 +7,7 @@
 using namespace std;
 typedef complex<double> complexd;
 
-int main(int argc, char* argv[])//n
+int main(int argc, char* argv[])//n infile_name
 {
 	int n = strtol(argv[1], NULL, 10),
 		num_of_elem = 1 << n;
