@@ -60,7 +60,31 @@ void quantum_transformation(complexd* a, complexd* result, const int n, const do
 	return;
 }
 
-int main(int argc, char* argv[])//n, EPS
+void file_manipulation(complexd* vec, const int num_of_elem, const int size, const int rank,
+						const MPI_Datatype double_double, const char* filename, bool in_out_flag)
+{
+	MPI_Datatype subarr_type;
+	MPI_File file;
+	int array_of_subsizes = num_of_elem / size;
+	int start = array_of_subsizes * rank;
+	MPI_Type_create_subarray(1, &num_of_elem, &array_of_subsizes, &start, MPI_ORDER_C, double_double, &subarr_type);
+	MPI_Type_commit(&subarr_type);
+	if (in_out_flag) {
+		MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_RDONLY, MPI_INFO_NULL, &file);
+		MPI_File_set_view(file, 0, double_double, subarr_type, "native", MPI_INFO_NULL);
+		MPI_File_read_all(file, vec, array_of_subsizes, double_double, MPI_STATUS_IGNORE);
+	} else {
+		MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &file);
+		MPI_File_set_view(file, 0, double_double, subarr_type, "native", MPI_INFO_NULL);
+		MPI_File_write_all(file, vec, array_of_subsizes, double_double, MPI_STATUS_IGNORE);
+	}
+	MPI_Type_free(&subarr_type);
+}
+
+#define GEN 0
+#define FILE 1
+
+int main(int argc, char* argv[])//n, EPS, filename, out_filename
 {
 	MPI_Init(&argc, &argv);
 	int rank, size;
@@ -68,47 +92,61 @@ int main(int argc, char* argv[])//n, EPS
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	int n = strtol(argv[1], NULL, 10),
 		num_of_elem = 1 << n;
-	double EPS = strtod (argv[2], NULL);
-	double compute_time = 0.0;
+	double EPS = strtod (argv[2], NULL),
+		compute_time = 0.0;
 	complexd* qbit_vec = new complexd[num_of_elem / size];
+	complexd* noisy_result_1 = new complexd[num_of_elem / size];
+	complexd* noisy_result_2 = new complexd[num_of_elem / size];
+	// complexd* normal_result_1 = new complexd[num_of_elem / size];
+	// complexd* normal_result_2 = new complexd[num_of_elem / size];
 	MPI_Datatype double_double;
 	MPI_Type_contiguous(2, MPI_DOUBLE, &double_double);
 	MPI_Type_commit(&double_double);
-	complexd* noisy_result_1 = new complexd[num_of_elem / size];
-	complexd* noisy_result_2 = new complexd[num_of_elem / size];
-	//complexd* normal_result_1 = new complexd[num_of_elem / size];
-	//complexd* normal_result_2 = new complexd[num_of_elem / size];
-	compute_time -= MPI_Wtime();
-	for (int k = 0; k < 5; ++k) {
-		unsigned int cur_time;
+	bool input_type;
+	int num_of_starts;
+	if (argc > 3) {
+		input_type = FILE;
+		num_of_starts = 1;
+	} else {
+		input_type = GEN;
+		cout << "Enter number of starts" << endl;
+		cin >> num_of_starts;
+	}
+	double tmp = 1 / sqrt(2);
+	double Hadamard[4] = {tmp, tmp, tmp, -tmp};
+//	compute_time -= MPI_Wtime();
+	for (int k = 0; k < num_of_starts; ++k) {
+		if (input_type == GEN) {
+			unsigned int cur_time;
 			if (rank == 0) {
 				cur_time = time(NULL);
 			}
-		if (size != 1) {
-			MPI_Bcast(&cur_time, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+			if (size != 1) {
+				MPI_Bcast(&cur_time, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+			}
+			cur_time += rank;
+			double sum = 0;
+			const int tmp_const = RAND_MAX / 2;
+			for (int i = 0; i < num_of_elem / size; ++i) {
+				noisy_result_1[i] = complexd(rand_r(&cur_time) - tmp_const, rand_r(&cur_time) - tmp_const);
+				sum += norm(qbit_vec[i]);
+			}
+			if (size != 1) {
+				MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+			}
+			sum = sqrt(sum);
+			for (int i = 0; i < num_of_elem / size; ++i) {
+				noisy_result_1[i] /= sum;
+			}
+		} else {
+			file_manipulation(qbit_vec, num_of_elem, size, rank, double_double, argv[3], 1);
 		}
-		cur_time += rank;
-		double sum = 0;
-		const int tmp_const = RAND_MAX / 2;
-		for (int i = 0; i < num_of_elem / size; ++i) {
-			qbit_vec[i] = complexd(rand_r(&cur_time) - tmp_const, rand_r(&cur_time) - tmp_const);
-			sum += norm(qbit_vec[i]);
-		}
-		if (size != 1) {
-			MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-		}
-		sum = sqrt(sum);
-		for (int i = 0; i < num_of_elem / size; ++i) {
-			qbit_vec[i] /= sum;
-		}
-		double tmp = 1 / sqrt(2);
-		double Hadamard[4] = {tmp, tmp, tmp, -tmp};
 		double* noise = new double[n];;
 		if (rank == 0) {
-			std::random_device rd;
-			std::mt19937 gen(rd());
-			std::normal_distribution<> dis(0,1);
-			//std::uniform_real_distribution<> dis(0.0, std::nextafter(1.0, std::numeric_limits<double>::max()));
+			random_device rd;
+			mt19937 gen(rd());
+			normal_distribution<> dis(0,1);
+			//uniform_real_distribution<> dis(0.0, nextafter(1.0, numeric_limits<double>::max()));
 			for (int i = 0; i < n; ++i) {
 				noise[i] = dis(gen);
 			}
@@ -120,14 +158,15 @@ int main(int argc, char* argv[])//n, EPS
 		double* cur_matrix = new double[4];
 		noisy_matrix(cur_matrix, noise[0], Hadamard, EPS);
 		quantum_transformation(qbit_vec, noisy_result_1, n, cur_matrix, 1, size, rank, double_double);
-		//quantum_transformation(qbit_vec, normal_result_1, n, Hadamard, 1, size, rank, double_double);
+//		quantum_transformation(qbit_vec, normal_result_1, n, Hadamard, 1, size, rank, double_double);
 		for (int j = 2; j < n + 1; ++j) {
-			noisy_matrix(cur_matrix, noise[j - 1], Hadamard, EPS);//вермя надо засекать только для испорченной матрицы
-
+			noisy_matrix(cur_matrix, noise[j - 1], Hadamard, EPS);
 			quantum_transformation(noisy_result_1, noisy_result_2, n, cur_matrix, j, size, rank, double_double);
-			std::swap(noisy_result_1, noisy_result_2);
-			//quantum_transformation(normal_result_1, normal_result_2, n, Hadamard, j, size, rank, double_double);//
-			//std::swap(normal_result_1, normal_result_2);//
+			swap(noisy_result_1, noisy_result_2);
+/*
+			quantum_transformation(normal_result_1, normal_result_2, n, Hadamard, j, size, rank, double_double);
+			swap(normal_result_1, normal_result_2);
+*/
 		}
 		delete[] cur_matrix;
 /*
@@ -147,26 +186,24 @@ int main(int argc, char* argv[])//n, EPS
 			ofile << 1 - Fidelity << endl;
 		}
 */
+		if (argc == 5) {
+			cout << "~~~~~~~~" << endl;
+			file_manipulation(noisy_result_1, num_of_elem, size, rank, double_double, argv[4], 0);
+		}
 	}
+/*
 	compute_time += MPI_Wtime();
 	if (rank == 0) {
 		MPI_Reduce(MPI_IN_PLACE, &compute_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 	} else {
 		MPI_Reduce(&compute_time, NULL, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 	}
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Type_free(&double_double);
-	delete[] qbit_vec;
-	delete[] noisy_result_1;
-	delete[] noisy_result_2;
-	//delete[] normal_result_1;
-	//delete[] normal_result_2;
-/*
 	if (rank == 0) {
 		ofstream ofile("time_file" + string(argv[3]), ios::app);
-		ofile << argv[3] << "  " << compute_time / 5 << endl;
+		ofile << argv[3] << "  " << compute_time / num_of_starts << endl;
 	}
 */
+
 	MPI_Finalize();
 	return 0;
 }
