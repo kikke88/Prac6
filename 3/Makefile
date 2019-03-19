@@ -1,6 +1,6 @@
 COMPILE = g++
 .PHONY: all clean install uninstall
-all: main print gen #tmp
+all: main print gen
 clean:
 	rm -rf gen print main tmp  *.out *.data time_file
 print: print.cpp
@@ -8,6 +8,4 @@ print: print.cpp
 gen: generator.cpp
 	${COMPILE} -fopenmp -O3 -o gen generator.cpp
 main: main.cpp
-	mpicxx -o main main.cpp
-tmp: tmp.cpp
-	${COMPILE} -o tmp tmp.cpp
+	mpicxx -fopenmp -o main main.cpp

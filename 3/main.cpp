@@ -29,6 +29,7 @@ void quantum_transformation(complexd* a, complexd* result, const int n, const do
 	int test = 1 << (n - k);
 	int log_k = log2(size);
 	if (k > log_k) {
+#pragma omp parallel for
 		for (int i = 0; i < num_of_elem / size; ++i) {
 			result[i] = u[(i & test && 1) * 2] * a[i & ~(test)] + u[(i & test && 1 ) * 2 + 1] * a[i | test];
 		}
@@ -49,6 +50,7 @@ void quantum_transformation(complexd* a, complexd* result, const int n, const do
 		//MPI_Sendrecv(a, num_of_elem / size, double_double, dest_rank, 0,
 		//			recv_vec, num_of_elem / size, double_double, dest_rank, 0,
 		//			MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+#pragma omp parallel for
 		for (int i = 0; i < num_of_elem / size; ++i) {
 			result[i] = u[swap_bit * 2] * a[i] + u[swap_bit * 2 + 1] * recv_vec[i];
 		}
@@ -84,15 +86,16 @@ void file_manipulation(complexd* vec, const int num_of_elem, const int size, con
 #define GEN 0
 #define FILE 1
 
-int main(int argc, char* argv[])//n, EPS, filename, out_filename
+int main(int argc, char* argv[])//n, EPS, (1, filename, out_filename) / (0, index)
 {
+	omp_set_num_threads(4);
 	MPI_Init(&argc, &argv);
 	int rank, size;
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	int n = strtol(argv[1], NULL, 10),
 		num_of_elem = 1 << n;
-	double EPS = strtod (argv[2], NULL),
+	double EPS = strtod(argv[2], NULL),
 		compute_time = 0.0;
 	complexd* qbit_vec = new complexd[num_of_elem / size];
 	complexd* noisy_result_1 = new complexd[num_of_elem / size];
@@ -104,17 +107,16 @@ int main(int argc, char* argv[])//n, EPS, filename, out_filename
 	MPI_Type_commit(&double_double);
 	bool input_type;
 	int num_of_starts;
-	if (argc > 3) {
+	int FLAG = strtol(argv[3], NULL, 10);
+	if (FLAG) {
 		input_type = FILE;
 		num_of_starts = 1;
 	} else {
 		input_type = GEN;
-		cout << "Enter number of starts" << endl;
-		cin >> num_of_starts;
+		num_of_starts = 5;///////
 	}
 	double tmp = 1 / sqrt(2);
 	double Hadamard[4] = {tmp, tmp, tmp, -tmp};
-//	compute_time -= MPI_Wtime();
 	for (int k = 0; k < num_of_starts; ++k) {
 		if (input_type == GEN) {
 			unsigned int cur_time;
@@ -124,29 +126,34 @@ int main(int argc, char* argv[])//n, EPS, filename, out_filename
 			if (size != 1) {
 				MPI_Bcast(&cur_time, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
 			}
-			cur_time += rank;
 			double sum = 0;
 			const int tmp_const = RAND_MAX / 2;
-			for (int i = 0; i < num_of_elem / size; ++i) {
-				noisy_result_1[i] = complexd(rand_r(&cur_time) - tmp_const, rand_r(&cur_time) - tmp_const);
-				sum += norm(qbit_vec[i]);
+#pragma omp parallel
+			{
+				unsigned int seed = cur_time + rank * omp_get_num_threads() + omp_get_thread_num();
+#pragma omp for reduction(+:sum)
+				for (int i = 0; i < num_of_elem / size; ++i) {
+					qbit_vec[i] = complexd(rand_r(&seed) - tmp_const, rand_r(&seed) - tmp_const);
+					sum += norm(qbit_vec[i]);
+				}
 			}
 			if (size != 1) {
 				MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 			}
 			sum = sqrt(sum);
+#pragma omp for
 			for (int i = 0; i < num_of_elem / size; ++i) {
-				noisy_result_1[i] /= sum;
+				qbit_vec[i] /= sum;
 			}
 		} else {
-			file_manipulation(qbit_vec, num_of_elem, size, rank, double_double, argv[3], 1);
+			file_manipulation(qbit_vec, num_of_elem, size, rank, double_double, argv[4], 1);
 		}
-		double* noise = new double[n];;
+		double* noise = new double[n];
 		if (rank == 0) {
 			random_device rd;
 			mt19937 gen(rd());
 			normal_distribution<> dis(0,1);
-			//uniform_real_distribution<> dis(0.0, nextafter(1.0, numeric_limits<double>::max()));
+//			uniform_real_distribution<> dis(0.0, nextafter(1.0, numeric_limits<double>::max()));
 			for (int i = 0; i < n; ++i) {
 				noise[i] = dis(gen);
 			}
@@ -154,6 +161,7 @@ int main(int argc, char* argv[])//n, EPS, filename, out_filename
 		if (size != 1) {
 			MPI_Bcast(noise, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 		}
+		compute_time -= MPI_Wtime();
 		//j = 1
 		double* cur_matrix = new double[4];
 		noisy_matrix(cur_matrix, noise[0], Hadamard, EPS);
@@ -168,6 +176,7 @@ int main(int argc, char* argv[])//n, EPS, filename, out_filename
 			swap(normal_result_1, normal_result_2);
 */
 		}
+		compute_time += MPI_Wtime();
 		delete[] cur_matrix;
 /*
 		double Fidelity = 0.0;
@@ -186,24 +195,20 @@ int main(int argc, char* argv[])//n, EPS, filename, out_filename
 			ofile << 1 - Fidelity << endl;
 		}
 */
-		if (argc == 5) {
+		if (FLAG && argc == 6) {
 			cout << "~~~~~~~~" << endl;
-			file_manipulation(noisy_result_1, num_of_elem, size, rank, double_double, argv[4], 0);
+			file_manipulation(noisy_result_1, num_of_elem, size, rank, double_double, argv[5], 0);
 		}
 	}
-/*
-	compute_time += MPI_Wtime();
 	if (rank == 0) {
 		MPI_Reduce(MPI_IN_PLACE, &compute_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 	} else {
 		MPI_Reduce(&compute_time, NULL, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 	}
 	if (rank == 0) {
-		ofstream ofile("time_file" + string(argv[3]), ios::app);
-		ofile << argv[3] << "  " << compute_time / num_of_starts << endl;
+		ofstream ofile("time_file" + string(argv[4]), ios::app);
+		ofile << argv[4] << "  " << compute_time / num_of_starts << endl;
 	}
-*/
-
 	MPI_Finalize();
 	return 0;
 }
