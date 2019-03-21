@@ -1,4 +1,6 @@
 import sys
+import matplotlib.pyplot as plt
+import numpy as np
 with open(sys.argv[1]) as f:
     array = []
     for line in f:
@@ -10,18 +12,14 @@ array = []
 arr = sorted(arr)
 
 sum = 0.0
-import numpy as np
 x = np.array(arr)
 for y in x:
     sum += y
 print(sum / x.size)
 
-
 '''
-print(arr)
-import matplotlib.pyplot as plt
-import numpy as np
-x = np.array(arr)
+
+#print(arr)
 bins = np.linspace(x[0], x[-1], x.size / 2)
 plt.hist(x, bins, alpha = 0.7, histtype='bar', ec='black')
 plt.xticks(fontsize = 7)

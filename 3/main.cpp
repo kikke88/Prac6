@@ -83,6 +83,13 @@ void file_manipulation(complexd* vec, const int num_of_elem, const int size, con
 	MPI_Type_free(&subarr_type);
 }
 
+void COMPLEXD_SUM(void *in, void *inout, int *len, MPI_Datatype *type)
+{
+	for (int i = 0; i < *len; ++i) {
+		((complexd*)inout)[i] = ((complexd*)in)[i] + ((complexd*)inout)[i];
+	}
+}
+
 #define GEN 0
 #define FILE 1
 
@@ -100,8 +107,8 @@ int main(int argc, char* argv[])//n, EPS, (1, filename, out_filename) / (0, inde
 	complexd* qbit_vec = new complexd[num_of_elem / size];
 	complexd* noisy_result_1 = new complexd[num_of_elem / size];
 	complexd* noisy_result_2 = new complexd[num_of_elem / size];
-	// complexd* normal_result_1 = new complexd[num_of_elem / size];
-	// complexd* normal_result_2 = new complexd[num_of_elem / size];
+	complexd* normal_result_1 = new complexd[num_of_elem / size];
+	complexd* normal_result_2 = new complexd[num_of_elem / size];
 	MPI_Datatype double_double;
 	MPI_Type_contiguous(2, MPI_DOUBLE, &double_double);
 	MPI_Type_commit(&double_double);
@@ -113,10 +120,12 @@ int main(int argc, char* argv[])//n, EPS, (1, filename, out_filename) / (0, inde
 		num_of_starts = 1;
 	} else {
 		input_type = GEN;
-		num_of_starts = 5;///////
+		num_of_starts = 120;///////
 	}
 	double tmp = 1 / sqrt(2);
 	double Hadamard[4] = {tmp, tmp, tmp, -tmp};
+	MPI_Op complexd_sum;
+	MPI_Op_create(&COMPLEXD_SUM, 1, &complexd_sum);
 	for (int k = 0; k < num_of_starts; ++k) {
 		if (input_type == GEN) {
 			unsigned int cur_time;
@@ -161,45 +170,44 @@ int main(int argc, char* argv[])//n, EPS, (1, filename, out_filename) / (0, inde
 		if (size != 1) {
 			MPI_Bcast(noise, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 		}
+
 		compute_time -= MPI_Wtime();
 		//j = 1
 		double* cur_matrix = new double[4];
 		noisy_matrix(cur_matrix, noise[0], Hadamard, EPS);
 		quantum_transformation(qbit_vec, noisy_result_1, n, cur_matrix, 1, size, rank, double_double);
-//		quantum_transformation(qbit_vec, normal_result_1, n, Hadamard, 1, size, rank, double_double);
+		quantum_transformation(qbit_vec, normal_result_1, n, Hadamard, 1, size, rank, double_double);
 		for (int j = 2; j < n + 1; ++j) {
 			noisy_matrix(cur_matrix, noise[j - 1], Hadamard, EPS);
 			quantum_transformation(noisy_result_1, noisy_result_2, n, cur_matrix, j, size, rank, double_double);
 			swap(noisy_result_1, noisy_result_2);
-/*
 			quantum_transformation(normal_result_1, normal_result_2, n, Hadamard, j, size, rank, double_double);
 			swap(normal_result_1, normal_result_2);
-*/
+
 		}
 		compute_time += MPI_Wtime();
+
 		delete[] cur_matrix;
-/*
-		double Fidelity = 0.0;
+		complexd Fidelity (0.0, 0.0);
+		complexd Res_fidelity (0.0, 0.0);
 		for (int j = 0; j < num_of_elem / size; ++j) {
-			Fidelity += abs(conj(noisy_result_1[j]) * normal_result_1[j]);
+			Fidelity += conj(noisy_result_1[j]) * normal_result_1[j];
 		}
 		if (size != 1) {
-			if (rank == 0) {
-				MPI_Reduce(MPI_IN_PLACE, &Fidelity, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-			} else {
-				MPI_Reduce(&Fidelity, NULL, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-			}
+			MPI_Reduce(&Fidelity, &Res_fidelity, 1, double_double, complexd_sum, 0, MPI_COMM_WORLD);
 		}
 		if (rank == 0) {
-			ofstream ofile("F_" + to_string(n) + "_" + argv[2], ios::app);//
-			ofile << 1 - Fidelity << endl;
+			double res = norm(Res_fidelity);
+			ofstream ofile("F_" + to_string(n) + "_" + argv[2], ios::app);
+			ofile << 1 - res << endl;
+			//cout << 1 - res << endl;
 		}
-*/
 		if (FLAG && argc == 6) {
 			cout << "~~~~~~~~" << endl;
 			file_manipulation(noisy_result_1, num_of_elem, size, rank, double_double, argv[5], 0);
 		}
 	}
+/*
 	if (rank == 0) {
 		MPI_Reduce(MPI_IN_PLACE, &compute_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 	} else {
@@ -209,6 +217,15 @@ int main(int argc, char* argv[])//n, EPS, (1, filename, out_filename) / (0, inde
 		ofstream ofile("time_file" + string(argv[4]), ios::app);
 		ofile << argv[4] << "  " << compute_time / num_of_starts << endl;
 	}
+*/
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Type_free(&double_double);
+	MPI_Op_free(&complexd_sum);
+	delete[] qbit_vec;
+	delete[] noisy_result_1;
+	delete[] noisy_result_2;
+	delete[] normal_result_1;
+	delete[] normal_result_2;
 	MPI_Finalize();
 	return 0;
 }
