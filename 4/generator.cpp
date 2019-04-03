@@ -19,15 +19,16 @@ int main(int argc, char* argv[])//n, ofile_name
 	omp_set_num_threads(thrds);
 	complexd* qbit_vec = new complexd[num_of_elem];
 	double sum = 0;
+	const int tmp_const = RAND_MAX / 2;
 	unsigned int thrd_seed;
 	unsigned int cur_time = time(NULL);
-#pragma omp parallel  default(none) shared(qbit_vec, num_of_elem, sum, cur_time) private(thrd_seed)
+#pragma omp parallel  shared(qbit_vec, num_of_elem, sum, cur_time) private(thrd_seed)
 	{
 		thrd_seed = cur_time + omp_get_thread_num();
 #pragma omp for reduction(+:sum)
 		for (int i = 0; i < num_of_elem; i += 1) {
-			//qbit_vec[i] = complexd(i, i + 1);
-			qbit_vec[i] = complexd(rand_r(&thrd_seed), rand_r(&thrd_seed));
+			qbit_vec[i] = complexd(i, i + 1);
+			//qbit_vec[i] = complexd(rand_r(&thrd_seed) - tmp_const, rand_r(&thrd_seed) - tmp_const);
 			sum += norm(qbit_vec[i]);
 		}
     }

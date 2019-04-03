@@ -7,5 +7,5 @@ print: print.cpp
 	${COMPILE} -o print print.cpp
 gen: generator.cpp
 	${COMPILE} -fopenmp -O3 -o gen generator.cpp
-main: main.cpp
+main: main.cpp quantum_logic_gate.hpp
 	mpicxx -fopenmp -o main main.cpp
