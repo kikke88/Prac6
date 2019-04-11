@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {  //  n, 0 infile, 1 outfile
             outfile = argv[5];
         }
     }
-    omp_set_num_threads(1);
+    omp_set_num_threads(4);
     MPI_Init(&argc, &argv);
     int rank, size;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {  //  n, 0 infile, 1 outfile
     {
         Quantum_vector vec1(n, size, rank);
         vec1.vector_filling(infile);
-        vec1.CNOT_gate(1, 2);
+        vec1.CNOT_gate(2, 1);
         MPI_Barrier(MPI_COMM_WORLD);
         vec1.file_output(outfile);
     }
