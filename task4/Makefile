@@ -1,8 +1,8 @@
 COMPILE = g++
-.PHONY: all clean install uninstall
-all: main print gen
+.PHONY: all clean install
+all: main print gen differ not cnot
 clean:
-	rm -rf gen print main tmp  *.out *.data time_file
+	rm -rf gen print main tmp not cnot compare *.out *.data time_file
 print: print.cpp
 	${COMPILE} -o print print.cpp
 lint:
@@ -14,3 +14,9 @@ main: main.cpp quantum_logic_gate.hpp
 	mpicxx -Wall -Werror -fopenmp -o main main.cpp
 test:
 	make clean && make
+differ: dif.cpp
+	${COMPILE} -o compare dif.cpp
+not: not_check.cpp
+	${COMPILE} -o not not_check.cpp
+cnot:
+	${COMPILE} -o cnot cnot_check.cpp

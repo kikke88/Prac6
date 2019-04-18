@@ -185,7 +185,7 @@ void Quantum_vector::Phase_shift_gate(const int k, const double phi) {
 }
 
 void Quantum_vector::NOT_gate(const int k) {
-    const complexd NOT[4] {complexd(0, 1), complexd(1, 0),
+    const complexd NOT[4] {complexd(0, 0), complexd(1, 0),
                            complexd(1, 0), complexd(0, 0)};
     single_qubit_transform(k, NOT);
 }
