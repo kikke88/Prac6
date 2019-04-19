@@ -2,7 +2,7 @@
 make
 
 processes=2
-qbits=2
+qbits=5
 
 ./gen ${qbits} n_${qbits}.data
 mpirun -n ${processes} ./main ${qbits} 1 0 0 n_${qbits}.data ${qbits}_n_Had_1.data

@@ -13,7 +13,9 @@ gen: generator.cpp
 main: main.cpp quantum_logic_gate.hpp
 	mpicxx -Wall -Werror -fopenmp -o main main.cpp
 test:
-	make clean && make
+	./n_Had_test.sh
+	./not_test.sh
+	./cnot_test.sh
 differ: dif.cpp
 	${COMPILE} -o compare dif.cpp
 not: not_check.cpp
