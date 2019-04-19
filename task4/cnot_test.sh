@@ -13,7 +13,7 @@ do
         then
             continue
         fi
-        mpirun -n ${processes} ./main ${qbits} 4 ${bit1} ${bit2} n_${qbits}.data ${qbits}_cnot_${bit1}${bit2}.data
+        mpirun -n ${processes} --oversubscribe ./main ${qbits} 4 ${bit1} ${bit2} n_${qbits}.data ${qbits}_cnot_${bit1}${bit2}.data
         ./cnot ${qbits} ${bit1} ${bit2} n_${qbits}.data cnot_RESULT.data
         ./compare ${qbits} ${qbits}_cnot_${bit1}${bit2}.data cnot_RESULT.data
     done
