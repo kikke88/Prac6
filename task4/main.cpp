@@ -66,7 +66,6 @@ int main(int argc, char* argv[]) {  //  n, Z, k, l, infile, outfile
             case 5:
                 vec1.Controlled_Phase_shift_gate(k, l, phi);
                 break;
-
         }
         MPI_Barrier(MPI_COMM_WORLD);
         vec1.file_output(outfile);
