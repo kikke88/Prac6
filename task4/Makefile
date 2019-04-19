@@ -13,6 +13,10 @@ gen: generator.cpp
 main: main.cpp quantum_logic_gate.hpp
 	mpicxx -Wall -Werror -fopenmp -o main main.cpp
 test:
+	./n_Had_test.sh --oversubscribe
+	./not_test.sh --oversubscribe
+	./cnot_test.sh --oversubscribe
+local_test:
 	./n_Had_test.sh
 	./not_test.sh
 	./cnot_test.sh
