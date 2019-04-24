@@ -91,7 +91,7 @@ int main(int argc, char* argv[])//n, k, генерируешь сам 0 / фай
     		qbit_vec_local[i] /= sum_local;
     	}
     } else {
-        MPI_File in_file;ё
+        MPI_File in_file;
         int start = array_of_subsizes * rank;
         MPI_Type_create_subarray(1, &num_of_elem, &array_of_subsizes, &start, MPI_ORDER_C, double_double, &subarr_type);
         MPI_Type_commit(&subarr_type);
@@ -107,12 +107,12 @@ int main(int argc, char* argv[])//n, k, генерируешь сам 0 / фай
 	quantum_transformation(qbit_vec_local, result_local, n, matrix, k, size, rank, double_double);
 	compute_time += MPI_Wtime();
 	if (mode == FILE) {
-/*
+
 		MPI_File out_file;
         MPI_File_open(MPI_COMM_WORLD, argv[5], MPI_MODE_WRONLY | MPI_MODE_CREATE, MPI_INFO_NULL, &out_file);
         MPI_File_set_view(out_file, 0, double_double, subarr_type, "native", MPI_INFO_NULL);
 		MPI_File_write_all(out_file, result_local, array_of_subsizes, double_double, MPI_STATUS_IGNORE);
-*/
+
 	} else {
 /*
 //вывод, случай параллельной генерации

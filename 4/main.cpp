@@ -23,22 +23,6 @@ int main(int argc, char* argv[]) {  //  n, Z, k, l, infile, outfile
     const char* outfile;
     infile = argv[5];
     outfile = argv[6];
-/*
-    if (argc > 4) {
-        if (strtol(argv[4], NULL, 10) == 0) {
-            infile = argv[5];
-        } else {
-            outfile = argv[5];
-        }
-    }
-    if (argc > 6) {
-        if (strtol(argv[6], NULL, 10) == 0) {
-            infile = argv[7];
-        } else {
-            outfile = argv[7];
-        }
-    }
-*/
     omp_set_num_threads(4);
     MPI_Init(&argc, &argv);
     int rank, size;

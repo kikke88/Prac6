@@ -181,8 +181,8 @@ int main(int argc, char* argv[])//n, EPS, (1, filename, out_filename) / (0, inde
 			noisy_matrix(cur_matrix, noise[j - 1], Hadamard, EPS);
 			quantum_transformation(noisy_result_1, noisy_result_2, n, cur_matrix, j, size, rank, double_double);
 			swap(noisy_result_1, noisy_result_2);
-			quantum_transformation(normal_result_1, normal_result_2, n, Hadamard, j, size, rank, double_double);
-			swap(normal_result_1, normal_result_2);
+			//quantum_transformation(normal_result_1, normal_result_2, n, Hadamard, j, size, rank, double_double);
+			//swap(normal_result_1, normal_result_2);
 
 		}
 		compute_time += MPI_Wtime();
