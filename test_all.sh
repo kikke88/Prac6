@@ -7,7 +7,7 @@ set -e
 
 cur_dir=$(pwd)
 echo --- Running test ---
-cd ${cur_dir}/task4
+cd ${cur_dir}/4
 make test
 
 echo_green 'All tests pass!'
