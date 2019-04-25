@@ -10,7 +10,7 @@ arch:
   - openmpi
   - cpplint
   script:
-  - if ! ./test_all.sh; then exit 1; fi
+#  - if ! ./test_all.sh; then exit 1; fi
   - if ! ./lint_all.sh; them exit 1; fi
 
 script:
