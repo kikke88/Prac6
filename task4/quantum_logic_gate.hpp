@@ -1,5 +1,5 @@
-#ifndef TASK4_QUANTUM_LOGIC_GATE_HPP_
-#define TASK4_QUANTUM_LOGIC_GATE_HPP_
+#ifndef TASK4_QUANTUM_LOGIC_GATE_H_
+#define TASK4_QUANTUM_LOGIC_GATE_H_
 
 #include <mpi.h>
 #include <omp.h>
