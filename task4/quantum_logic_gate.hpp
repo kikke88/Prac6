@@ -22,6 +22,7 @@ class Quantum_vector {
     void file_manipulation(const char*, const int);
     void single_qubit_transform(const int, const complexd[4]);
     void double_qubits_transform(const int, const int, const complexd[16]);
+
  public:
     Quantum_vector(const int, const int, const int);
     ~Quantum_vector();
