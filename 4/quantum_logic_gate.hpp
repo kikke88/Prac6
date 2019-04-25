@@ -231,8 +231,8 @@ void Quantum_vector::double_qubits_transform(const int k,
         for (int i = 0; i < elem_in_one_proc; ++i) {
             i_k_i_l = (i & test_k && 1) << 1 | swap_bit;
             vector_2[i] = matrix[i_k_i_l] * vector_1[i & ~test_k] +
-                          matrix[4 | i_k_i_l] * recv_vec[i & ~test_k] +
-                          matrix[8 | i_k_i_l] * vector_1[i | test_k] +
+                          matrix[12 | i_k_i_l] * recv_vec[i & ~test_k] +
+                          matrix[4 | i_k_i_l] * vector_1[i | test_k] +
                           matrix[12 | i_k_i_l] * recv_vec[i | test_k];
         }
         if (swap_bit == 1) {
@@ -259,8 +259,8 @@ void Quantum_vector::double_qubits_transform(const int k,
 #pragma omp parallel for private(i_k_i_l)
         for (int i = 0; i < elem_in_one_proc; ++i) {
             i_k_i_l = swap_bit << 1 | (i & test_l && 1);
-            vector_2[i] = matrix[i_k_i_l] * vector_1[i & ~test_l] +
-                          matrix[4 | i_k_i_l] * vector_1[i | test_l] +
+            vector_2[i] = matrix[4 | i_k_i_l] * vector_1[i & ~test_l] +
+                          matrix[i_k_i_l] * vector_1[i | test_l] +
                           matrix[8 | i_k_i_l] * recv_vec[i & ~test_l] +
                           matrix[12 | i_k_i_l] * recv_vec[i | test_l];
         }
