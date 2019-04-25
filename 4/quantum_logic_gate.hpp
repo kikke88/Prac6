@@ -126,7 +126,7 @@ void Quantum_vector::vector_filling(const char* input_file_name) {
     file_manipulation(input_file_name, input_flag);
 }
 
-void Quantum_vector::single_qubit_transform(const int k,
+void Quantum_vector::single_qubit_transform (const int k,
                                             const complexd matrix[4]) {
     int test {1 << (num_of_qubits - k)};
     int log_size {static_cast<int>(log2(size))};
@@ -139,9 +139,9 @@ void Quantum_vector::single_qubit_transform(const int k,
     } else {
         complexd* recv_vec {new complexd[elem_in_one_proc]};
         int dest_rank {rank ^ 1 << (log_size - k)};
-        int swap_bit {rank & 1 << (log_size - k) && 1};
+        int swap_bit {rank & 1<< (log_size - k) && 1};
         if (swap_bit == 1) {
-            MPI_Send(vector_1, elem_in_one_proc, double_double, dest_rank,
+            MPI_Send (vector_1, elem_in_one_proc, double_double, dest_rank,
                      0, MPI_COMM_WORLD);
             MPI_Recv(recv_vec, elem_in_one_proc, double_double, dest_rank,
                      0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -153,12 +153,12 @@ void Quantum_vector::single_qubit_transform(const int k,
                      0, MPI_COMM_WORLD);
         }
 #pragma omp parallel for
-        for (int i = 0; i < elem_in_one_proc; ++i) {
-            vector_2[i] = matrix[swap_bit * 2] * vector_1[i] +
+        for(int i = 0; i < elem_in_one_proc; ++i) {
+               vector_2[i] = matrix[swap_bit * 2] * vector_1[i] +
                           matrix[swap_bit * 2 + 1] * recv_vec[i];
         }
         if (swap_bit == 1) {
-            swap(vector_1, recv_vec);
+        swap(vector_1, recv_vec);
         }
         delete[] recv_vec;
     }
