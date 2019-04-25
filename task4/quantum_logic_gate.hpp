@@ -1,5 +1,5 @@
-#ifndef TASK4_QUANTUM_LOGIC_GATE_H_
-#define TASK4_QUANTUM_LOGIC_GATE_H_
+#ifndef TASK4_QUANTUM_LOGIC_GATE_HPP_
+#define TASK4_QUANTUM_LOGIC_GATE_HPP_
 
 #include <mpi.h>
 #include <omp.h>
@@ -22,7 +22,6 @@ class Quantum_vector {
     void file_manipulation(const char*, const int);
     void single_qubit_transform(const int, const complexd[4]);
     void double_qubits_transform(const int, const int, const complexd[16]);
-
  public:
     Quantum_vector(const int, const int, const int);
     ~Quantum_vector();
@@ -185,7 +184,7 @@ void Quantum_vector::Phase_shift_gate(const int k, const double phi) {
 }
 
 void Quantum_vector::NOT_gate(const int k) {
-    const complexd NOT[4] {complexd(0, 0), complexd(1, 0),
+    const complexd NOT[4] {complexd(0, 1), complexd(1, 0),
                            complexd(1, 0), complexd(0, 0)};
     single_qubit_transform(k, NOT);
 }

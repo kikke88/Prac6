@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+
 make
 processes=2
 qbits=5
