@@ -205,7 +205,7 @@ void Quantum_vector::double_qubits_transform(const int k,
                           vector_1[i & ~(test_k | test_l)] +
                           matrix[4 | i_k_i_l] *
                           vector_1[(i & ~test_k) | test_l] +
-                          matrix[8 | i_k_i_l] *
+                          matrix[10 | i_k_i_l] *
                           vector_1[(i & ~test_l) | test_k] +
                           matrix[12 | i_k_i_l] *
                           vector_1[i | test_k | test_l];
