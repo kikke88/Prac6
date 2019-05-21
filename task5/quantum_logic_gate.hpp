@@ -1,5 +1,5 @@
-#ifndef TASK4_QUANTUM_LOGIC_GATE_HPP_
-#define TASK4_QUANTUM_LOGIC_GATE_HPP_
+#ifndef TASK5_QUANTUM_LOGIC_GATE_HPP_
+#define TASK5_QUANTUM_LOGIC_GATE_HPP_
 
 #include <mpi.h>
 #include <omp.h>
@@ -398,7 +398,8 @@ void Quantum_vector::file_output(const char* output_file_name) {
     file_manipulation(output_file_name, output_flag);
 }
 
-void Quantum_vector::Fourier_transform(const char* outfile_name, const char* run_conf) {
+void Quantum_vector::Fourier_transform(const char* outfile_name,
+                                        const char* run_conf) {
     double compute_time = 0.0;
     compute_time -= MPI_Wtime();
     for (int i = 1; i <= num_of_qubits; ++i) {
@@ -410,26 +411,29 @@ void Quantum_vector::Fourier_transform(const char* outfile_name, const char* run
     }
     compute_time += MPI_Wtime();
     if (rank == 0) {
-		MPI_Reduce(MPI_IN_PLACE, &compute_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-	} else {
-		MPI_Reduce(&compute_time, NULL, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-	}
-	if (rank == 0) {
-		std::ofstream ofile("time_file", std::ios::app);
-		ofile << run_conf << "  " << compute_time << std::endl;
-	}
+        MPI_Reduce(MPI_IN_PLACE, &compute_time, 1, MPI_DOUBLE,
+                    MPI_MAX, 0, MPI_COMM_WORLD);
+    } else {
+        MPI_Reduce(&compute_time, NULL, 1, MPI_DOUBLE, MPI_MAX,
+                    0, MPI_COMM_WORLD);
+    }
+    if (rank == 0) {
+        std::ofstream ofile("time_file", std::ios::app);
+        ofile << run_conf << "  " << compute_time << std::endl;
+    }
 
     std::vector<int> bit_masks(num_of_qubits);
     bit_masks[num_of_qubits - 1] = 1;
     for (int i = num_of_qubits - 2; i >= 0; --i) {
         bit_masks[i] = bit_masks[i + 1] << 1;
     }
-    int min_index = size + 1;//
+    int min_index = size + 1;
     std::vector<int> index_vec(elem_in_one_proc);
     for (int i = 0 ; i < elem_in_one_proc; ++i) {
         int new_index = 0;
         for (int j = 0; j < num_of_qubits; ++j) {
-            new_index |= (((i + rank * elem_in_one_proc) & bit_masks[j]) && 1) << j;
+            new_index |= (((i + rank * elem_in_one_proc) & bit_masks[j]) && 1)
+                                                                    << j;
         }
         if (new_index < min_index) {
             min_index = new_index;
@@ -455,7 +459,6 @@ void Quantum_vector::Fourier_transform(const char* outfile_name, const char* run
     MPI_File_write(file, vector_1, elem_in_one_proc, double_double,
                    MPI_STATUS_IGNORE);
     MPI_Type_free(&subarr_type);
-    
 }
 
-#endif  // TASK4_QUANTUM_LOGIC_GATE_HPP_
+#endif  // TASK5_QUANTUM_LOGIC_GATE_HPP_
