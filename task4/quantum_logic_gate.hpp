@@ -370,9 +370,9 @@ void Quantum_vector::double_qubits_transform(const int k,
 
 void Quantum_vector::CNOT_gate(const int k, const int l) {
     const complexd CNOT[16] {
-        complexd(1, 0), complexd(0, 0), complexd(0, 0), complexd(0, 0),
+        complexd(1, 0), complexd(0, 0), complexd(1, 0), complexd(0, 0),
         complexd(0, 0), complexd(1, 0), complexd(0, 0), complexd(0, 0),
-        complexd(0, 0), complexd(0, 0), complexd(0, 0), complexd(1, 0),
+        complexd(1, 0), complexd(0, 0), complexd(0, 0), complexd(1, 0),
         complexd(0, 0), complexd(0, 0), complexd(1, 0), complexd(0, 0)};
     double_qubits_transform(k, l, CNOT);
 }
