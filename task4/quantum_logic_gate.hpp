@@ -103,11 +103,11 @@ void Quantum_vector::vector_filling() {
                             rank * omp_get_num_threads() +
                             omp_get_thread_num();
 #pragma omp for reduction(+:sum)
-        for (int i = 0; i < elem_in_one_proc; ++i) {
+        for (int i= 0; i  < elem_in_one_proc; ++i) {
             vector_1[i] = complexd(rand_r(&seed) - tmp_const,
                                    rand_r(&seed) - tmp_const);
         //    vector_1[i] = complexd(i, i + 1);
-            sum += norm(vector_1[i]);
+            sum +=  norm(vector_1[i]);
         }
     }
     if (size != 1) {
@@ -140,13 +140,14 @@ void Quantum_vector::single_qubit_transform(const int k,
         complexd* recv_vec {new complexd[elem_in_one_proc]};
         int dest_rank {rank ^ 1 << (log_size - k)};
         int swap_bit {rank & 1 << (log_size - k) && 1};
-        if (swap_bit == 1) {
+        if(swap_bit == 1) {
             MPI_Send(vector_1, elem_in_one_proc, double_double, dest_rank,
                      0, MPI_COMM_WORLD);
             MPI_Recv(recv_vec, elem_in_one_proc, double_double, dest_rank,
                      0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             swap(vector_1, recv_vec);
-        } else {
+        }
+     else {
             MPI_Recv(recv_vec, elem_in_one_proc, double_double, dest_rank,
                      0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             MPI_Send(vector_1, elem_in_one_proc, double_double, dest_rank,
