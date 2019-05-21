@@ -293,9 +293,9 @@ void Quantum_vector::double_qubits_transform(const int k,
             MPI_Bcast(recv_vec_2, elem_in_one_proc, double_double, 3, NEW_COMM);
 #pragma omp parallel for
             for (int i = 0; i < elem_in_one_proc; ++i) {
-                vector_2[i] = matrix[i_k_i_l] * vector_1[i] +
+                vector_2[i] = matrix[i_k_i_l] * vector_0[i] +
                               matrix[4 | i_k_i_l] * recv_vec_2[i] +
-                              matrix[8 | i_k_i_l] * recv_vec_1[i] +
+                              matrix[9 | i_k_i_l] * recv_vec_0[i] +
                               matrix[1 | i_k_i_l] * recv_vec_2[i];
         }
         } else if (place_bits_k == 0 && place_bits_l == 1) {
