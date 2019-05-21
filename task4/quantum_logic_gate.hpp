@@ -154,8 +154,8 @@ void Quantum_vector::single_qubit_transform(const int k,
         }
 #pragma omp parallel for
         for (int i = 0; i < elem_in_one_proc; ++i) {
-            vector_2[i] = matrix[swap_bit * 2] * vector_1[i] +
-                          matrix[swap_bit * 2 + 1] * recv_vec[i];
+            vector_2[i] = matrix[swap_bit * 2 + 1] * vector_1[i] +
+                          matrix[swap_bit * 2] * recv_vec[i];
         }
         if (swap_bit == 1) {
             swap(vector_1, recv_vec);
