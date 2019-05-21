@@ -1,6 +1,6 @@
 COMPILE = g++
 .PHONY: all clean install
-all: main print gen
+all: main print gen differ
 clean:
 	rm -rf gen print main tmp not cnot compare *.out *.data time_file
 print: print.cpp
@@ -10,5 +10,9 @@ lint:
 	cpplint --filter=-legal/copyright --extensions=hpp quantum_logic_gate.hpp
 gen: generator.cpp
 	${COMPILE} -fopenmp -O3 -o gen generator.cpp
+differ: dif.cpp
+	${COMPILE} -o compare dif.cpp
 main: main.cpp quantum_logic_gate.hpp
 	mpicxx -Wall -Werror -fopenmp -o main main.cpp
+test:
+	./testing.sh

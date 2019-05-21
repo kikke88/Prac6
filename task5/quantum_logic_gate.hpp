@@ -407,9 +407,6 @@ void Quantum_vector::Fourier_transform(const char* outfile_name, const char* run
         for (int j = i + 1; j <= num_of_qubits; ++j) {
             Controlled_Phase_shift_gate(j, i, 2 * M_PI / (1 << k++));
         }
-        if (rank == 0) {
-            std::cout << i << std::endl;
-        }
     }
     compute_time += MPI_Wtime();
     if (rank == 0) {
@@ -421,7 +418,7 @@ void Quantum_vector::Fourier_transform(const char* outfile_name, const char* run
 		std::ofstream ofile("time_file", std::ios::app);
 		ofile << run_conf << "  " << compute_time << std::endl;
 	}
-    /*
+
     std::vector<int> bit_masks(num_of_qubits);
     bit_masks[num_of_qubits - 1] = 1;
     for (int i = num_of_qubits - 2; i >= 0; --i) {
@@ -458,7 +455,7 @@ void Quantum_vector::Fourier_transform(const char* outfile_name, const char* run
     MPI_File_write(file, vector_1, elem_in_one_proc, double_double,
                    MPI_STATUS_IGNORE);
     MPI_Type_free(&subarr_type);
-    */
+    
 }
 
 #endif  // TASK4_QUANTUM_LOGIC_GATE_HPP_
